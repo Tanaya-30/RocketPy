@@ -21,13 +21,9 @@ ANGLE_TOL = 1e-14
 
 
 class Quaternion:
-    """Represent a quaternion in the order [w, x, y, z].
+    """Represent a quaternion stored as [w, x, y, z].
 
-    The class implements attitude operations suitable for navigation filters,
-    rigid-body kinematics, and frame transformations. The implementation uses
-    the Hamilton convention, active rotations, and a right-handed coordinate
-    system. All internal storage and calculations use ``numpy.float64`` for
-    consistent numerical behavior.
+    Supports attitude operations for navigation and frame transformations.
     """
 
     def __init__(
@@ -37,12 +33,7 @@ class Quaternion:
         y: float | np.floating[Any],
         z: float | np.floating[Any],
     ) -> None:
-        """Initialize a quaternion from scalar components.
-
-        The quaternion uses the Hamilton convention with storage order
-        [w, x, y, z] and represents active rotations in a right-handed
-        coordinate system.
-        """
+        """Initialize a quaternion from scalar components stored in self.q."""
         self.q: NDArray[np.float64] = np.array(
             [np.float64(w), np.float64(x), np.float64(y), np.float64(z)],
             dtype=np.float64,
@@ -50,30 +41,51 @@ class Quaternion:
 
     @property
     def w(self) -> np.float64:
-        """Return the scalar part of the quaternion."""
+        """
+        Return the scalar component.
+
+        Retrieved from the internally stored quaternion
+        component ``self.q[0]``.
+        """
         return np.float64(self.q[0])
 
     @property
     def x(self) -> np.float64:
-        """Return the x component of the quaternion vector part."""
+        """
+        Return the x component.
+
+        Retrieved from the internally stored quaternion
+        component ``self.q[1]``.
+        """
         return np.float64(self.q[1])
 
     @property
     def y(self) -> np.float64:
-        """Return the y component of the quaternion vector part."""
+        """
+        Return the y component.
+
+        Retrieved from the internally stored quaternion
+        component ``self.q[2]``.
+        """
         return np.float64(self.q[2])
 
     @property
     def z(self) -> np.float64:
-        """Return the z component of the quaternion vector part."""
+        """
+        Return the z component.
+
+        Retrieved from the internally stored quaternion
+        component ``self.q[3]``.
+        """
         return np.float64(self.q[3])
 
     @classmethod
     def identity(cls) -> "Quaternion":
-        """Return the identity quaternion.
+        """
+        Return the identity quaternion.
 
-        The identity quaternion uses the Hamilton convention and represents no
-        rotation for active rotations in a right-handed coordinate system.
+        Constructed from the Hamilton components
+        [1, 0, 0, 0], representing zero rotation.
         """
         return cls(1.0, 0.0, 0.0, 0.0)
 
@@ -82,10 +94,11 @@ class Quaternion:
         cls,
         q: NDArray[np.float64] | list[float] | tuple[float, ...],
     ) -> "Quaternion":
-        """Construct a quaternion from a NumPy array or sequence.
+        """
+        Construct a quaternion from an array-like object.
 
-        The input follows the Hamilton convention with storage order [w, x, y, z]
-        and represents an active rotation in a right-handed coordinate system.
+        The quaternion components are copied from the
+        input sequence in Hamilton order [w, x, y, z].
         """
         values = np.asarray(q, dtype=np.float64)
         if values.shape != (4,):
@@ -94,11 +107,11 @@ class Quaternion:
 
     @classmethod
     def from_euler(cls, roll: float, pitch: float, yaw: float) -> "Quaternion":
-        """Construct a quaternion from roll, pitch, and yaw angles.
+        """
+        Construct a quaternion from Euler angles.
 
-        Euler angles use the aerospace ZYX convention. The quaternion follows the
-        Hamilton convention and represents active rotations in a right-handed
-        coordinate system.
+        Computed from the supplied roll, pitch and yaw
+        angles using the aerospace ZYX convention.
         """
         roll_half = np.float64(0.5 * roll)
         pitch_half = np.float64(0.5 * pitch)
@@ -120,11 +133,11 @@ class Quaternion:
 
     @classmethod
     def from_rotation_matrix(cls, R: NDArray[np.float64]) -> "Quaternion":
-        """Construct a quaternion from a rotation matrix.
+        """
+        Construct a quaternion from a rotation matrix.
 
-        The rotation matrix is interpreted as an active rotation in a
-        right-handed coordinate system and converted to a quaternion that uses
-        the Hamilton convention.
+        Computed from the supplied 3×3 rotation matrix
+        after validating its orthogonality.
         """
         rotation = np.asarray(R, dtype=np.float64)
         if rotation.shape != (3, 3):
@@ -170,12 +183,7 @@ class Quaternion:
         axis: NDArray[np.float64] | list[float] | tuple[float, ...],
         angle: float | np.floating[Any],
     ) -> "Quaternion":
-        """Construct a quaternion from an axis-angle pair.
-
-        The quaternion follows the Hamilton convention, uses the axis as an
-        active rotation axis in a right-handed coordinate system, and accepts
-        Euler-style angle input in radians.
-        """
+        """Construct a quaternion from an axis-angle pair."""
         axis_array = np.asarray(axis, dtype=np.float64).reshape(-1)
         if axis_array.size != 3:
             raise ValueError("Axis must be a 1D array-like of length 3.")
