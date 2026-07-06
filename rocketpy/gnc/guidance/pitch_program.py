@@ -67,8 +67,8 @@ class PitchProgram:
         self._times: list[float] = []
 
     def add_waypoint(
-    self,
-    waypoint: PitchWaypoint,
+        self,
+        waypoint: PitchWaypoint,
     ) -> None:
         """
         Add a waypoint to the pitch program.
@@ -78,27 +78,16 @@ class PitchProgram:
             waypoint,
             PitchWaypoint,
         ):
-            raise TypeError(
-                "waypoint must be a PitchWaypoint."
-            )
+            raise TypeError("waypoint must be a PitchWaypoint.")
 
         if self._waypoints:
 
-            if (
-                waypoint.time
-                <= self._waypoints[-1].time
-            ):
-                raise ValueError(
-                    "Waypoint times must be strictly increasing."
-                )
+            if waypoint.time <= self._waypoints[-1].time:
+                raise ValueError("Waypoint times must be strictly increasing.")
 
-        self._waypoints.append(
-            waypoint
-        )
+        self._waypoints.append(waypoint)
 
-        self._times.append(
-            waypoint.time
-        )
+        self._times.append(waypoint.time)
 
     def clear(
         self,
@@ -118,21 +107,14 @@ class PitchProgram:
         """
 
         if not self._waypoints:
-            raise ValueError(
-                "Pitch program contains no waypoints."
-            )
+            raise ValueError("Pitch program contains no waypoints.")
 
         previous_time = -np.inf
 
         for waypoint in self._waypoints:
 
-            if (
-                waypoint.time
-                <= previous_time
-            ):
-                raise ValueError(
-                    "Waypoint times must be strictly increasing."
-                )
+            if waypoint.time <= previous_time:
+                raise ValueError("Waypoint times must be strictly increasing.")
 
             previous_time = waypoint.time
 
@@ -146,10 +128,7 @@ class PitchProgram:
         if not self._waypoints:
             return 0.0
 
-        return (
-            self._waypoints[-1].time
-            - self._waypoints[0].time
-        )
+        return self._waypoints[-1].time - self._waypoints[0].time
 
     def num_waypoints(
         self,
@@ -158,10 +137,8 @@ class PitchProgram:
         Return the number of stored waypoints.
         """
 
-        return len(
-            self._waypoints
-        )
-    
+        return len(self._waypoints)
+
     def pitch_at_time(
         self,
         time: float,
@@ -187,19 +164,9 @@ class PitchProgram:
         first = self._waypoints[index - 1]
         second = self._waypoints[index]
 
-        alpha = (
-            (time - first.time)
-            / (second.time - first.time)
-        )
+        alpha = (time - first.time) / (second.time - first.time)
 
-        return (
-            first.pitch_deg
-            + alpha
-            * (
-                second.pitch_deg
-                - first.pitch_deg
-            )
-        )
+        return first.pitch_deg + alpha * (second.pitch_deg - first.pitch_deg)
 
     def quaternion_at_time(
         self,
@@ -211,9 +178,7 @@ class PitchProgram:
         The pitch program assumes zero roll and zero yaw.
         """
 
-        pitch = np.deg2rad(
-            self.pitch_at_time(time)
-        )
+        pitch = np.deg2rad(self.pitch_at_time(time))
 
         half_pitch = 0.5 * pitch
 
@@ -250,9 +215,7 @@ class PitchProgram:
         Return the number of waypoints.
         """
 
-        return len(
-            self._waypoints
-        )
+        return len(self._waypoints)
 
     def __iter__(
         self,
@@ -261,9 +224,7 @@ class PitchProgram:
         Iterate over the waypoints.
         """
 
-        return iter(
-            self._waypoints
-        )
+        return iter(self._waypoints)
 
     def __getitem__(
         self,
@@ -282,11 +243,9 @@ class PitchProgram:
         Return a string representation.
         """
 
-        return (
-            f"{self.__class__.__name__}"
-            f"(num_waypoints={len(self)})"
-        )
-    
+        return f"{self.__class__.__name__}" f"(num_waypoints={len(self)})"
+
+
 __all__ = [
     "PitchWaypoint",
     "PitchProgram",

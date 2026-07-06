@@ -20,10 +20,11 @@ from rocketpy.gnc.navigation.quaternion import Quaternion
 
 class TrajectoryTracker:
     """
-    Track a reference trajectory.
+    Reference trajectory tracker.
 
-    A trajectory tracker interpolates between stored waypoints to
-    produce a smooth reference state.
+    The tracker stores a reference trajectory and
+    computes the desired waypoint corresponding to
+    the current mission time.
     """
 
     def __init__(
@@ -31,7 +32,10 @@ class TrajectoryTracker:
         trajectory: ReferenceTrajectory | None = None,
     ) -> None:
         """
-        Initialize the tracker.
+        Initialize the trajectory tracker.
+
+        The internal reference trajectory is initialized
+        from the supplied trajectory, if provided.
 
         Parameters
         ----------
@@ -46,7 +50,10 @@ class TrajectoryTracker:
         self,
     ) -> ReferenceTrajectory | None:
         """
-        Return the active trajectory.
+        Return the active reference trajectory.
+
+        The returned trajectory is retrieved from the
+        internally stored reference trajectory.
         """
 
         return self._trajectory
@@ -56,16 +63,17 @@ class TrajectoryTracker:
         trajectory: ReferenceTrajectory,
     ) -> None:
         """
-        Set the active trajectory.
+        Set the active reference trajectory.
+
+        The supplied trajectory is validated and stored
+        as the current reference trajectory.
         """
 
         if not isinstance(
             trajectory,
             ReferenceTrajectory,
         ):
-            raise TypeError(
-                "trajectory must be a ReferenceTrajectory."
-            )
+            raise TypeError("trajectory must be a ReferenceTrajectory.")
 
         self._trajectory = trajectory
 
@@ -86,7 +94,7 @@ class TrajectoryTracker:
         """
 
         return self._trajectory is not None
-    
+
     def reference_at_time(
         self,
         time: float,
@@ -97,14 +105,10 @@ class TrajectoryTracker:
         """
 
         if self._trajectory is None:
-            raise ValueError(
-                "No reference trajectory available."
-            )
+            raise ValueError("No reference trajectory available.")
 
         if self._trajectory.is_empty():
-            raise ValueError(
-                "Reference trajectory is empty."
-            )
+            raise ValueError("Reference trajectory is empty.")
 
         first = self._trajectory.first_waypoint()
         last = self._trajectory.last_waypoint()
@@ -136,10 +140,7 @@ class TrajectoryTracker:
 
         assert self._trajectory is not None
 
-        waypoint_times = [
-            waypoint.time
-            for waypoint in self._trajectory
-        ]
+        waypoint_times = [waypoint.time for waypoint in self._trajectory]
 
         index = (
             bisect_right(
@@ -165,13 +166,13 @@ class TrajectoryTracker:
     ) -> float:
         """
         Compute the interpolation factor.
+
+        The returned interpolation factor is computed
+        from the supplied waypoint times.
         """
 
-        return (
-            (time - first.time)
-            / (second.time - first.time)
-        )
-    
+        return (time - first.time) / (second.time - first.time)
+
     def _interpolate_waypoint(
         self,
         first: Waypoint,
@@ -179,7 +180,10 @@ class TrajectoryTracker:
         time: float,
     ) -> Waypoint:
         """
-        Interpolate between two trajectory waypoints.
+        Interpolate between two waypoints.
+
+        The returned waypoint is computed by linearly
+        interpolating the supplied waypoint states.
         """
 
         alpha = self._interpolation_factor(
@@ -188,22 +192,13 @@ class TrajectoryTracker:
             time,
         )
 
-        position = (
-            (1.0 - alpha) * first.position
-            + alpha * second.position
-        )
+        position = (1.0 - alpha) * first.position + alpha * second.position
 
-        velocity = (
-            (1.0 - alpha) * first.velocity
-            + alpha * second.velocity
-        )
+        velocity = (1.0 - alpha) * first.velocity + alpha * second.velocity
 
         angular_velocity = (
-            (1.0 - alpha)
-            * first.angular_velocity
-            + alpha
-            * second.angular_velocity
-        )
+            1.0 - alpha
+        ) * first.angular_velocity + alpha * second.angular_velocity
 
         attitude = self._interpolate_quaternion(
             first.attitude,
@@ -276,17 +271,13 @@ class TrajectoryTracker:
         """
 
         if self._trajectory is None:
-            return (
-                f"{self.__class__.__name__}"
-                "(trajectory=None)"
-            )
+            return f"{self.__class__.__name__}" "(trajectory=None)"
 
         return (
-            f"{self.__class__.__name__}"
-            f"(num_waypoints="
-            f"{len(self._trajectory)})"
+            f"{self.__class__.__name__}" f"(num_waypoints=" f"{len(self._trajectory)})"
         )
-    
+
+
 __all__ = [
     "TrajectoryTracker",
 ]

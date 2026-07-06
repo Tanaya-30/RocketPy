@@ -18,7 +18,11 @@ from numpy.typing import NDArray
 @dataclass(frozen=True, slots=True)
 class MissionTarget:
     """
-    High-level mission objectives.
+    Immutable mission objectives.
+
+    The mission target stores the desired flight
+    objectives used by the Guidance subsystem.
+
 
     Parameters
     ----------
@@ -45,7 +49,12 @@ class MissionTarget:
     max_dynamic_pressure: float
 
     def __post_init__(self) -> None:
-        """Validate mission target."""
+        """
+        Validate the mission target.
+
+        The supplied mission parameters are validated
+        before the target is accepted.
+        """
 
         landing_position = np.asarray(
             self.landing_position,
@@ -59,14 +68,10 @@ class MissionTarget:
         )
 
         if self.landing_position.shape != (3,):
-            raise ValueError(
-                "landing_position must have shape (3,)."
-            )
+            raise ValueError("landing_position must have shape (3,).")
 
         if not np.all(np.isfinite(self.landing_position)):
-            raise ValueError(
-                "landing_position contains non-finite values."
-            )
+            raise ValueError("landing_position contains non-finite values.")
 
         for value, name in (
             (self.target_apogee, "target_apogee"),
@@ -78,18 +83,18 @@ class MissionTarget:
             ),
         ):
             if not np.isfinite(value):
-                raise ValueError(
-                    f"{name} must be finite."
-                )
+                raise ValueError(f"{name} must be finite.")
 
             if value <= 0.0:
-                raise ValueError(
-                    f"{name} must be greater than zero."
-                )
-            
+                raise ValueError(f"{name} must be greater than zero.")
+
+
 class Targeting:
     """
-    Mission target builder and validator.
+    Mission target manager.
+
+    The class creates, stores, validates and
+    provides access to the current mission target.
     """
 
     def __init__(
@@ -113,6 +118,9 @@ class Targeting:
     ) -> MissionTarget | None:
         """
         Return the current mission target.
+
+        The returned target is retrieved from the
+        internally stored mission target.
         """
 
         return self._target
@@ -120,15 +128,18 @@ class Targeting:
     def build_target(
         self,
         target_apogee: float,
-        landing_position: NDArray[np.float64]
-        | list[float]
-        | tuple[float, float, float],
+        landing_position: (
+            NDArray[np.float64] | list[float] | tuple[float, float, float]
+        ),
         mission_time: float,
         max_acceleration: float,
         max_dynamic_pressure: float,
     ) -> MissionTarget:
         """
         Create and store a mission target.
+
+        The supplied mission parameters are validated
+        and stored as the current mission target.
         """
 
         target = MissionTarget(
@@ -147,14 +158,15 @@ class Targeting:
         self,
     ) -> None:
         """
-        Validate that a mission target exists.
+        Validate the current mission target.
+
+        Ensures that a mission target has been defined
+        before it is accessed.
         """
 
         if self._target is None:
-            raise ValueError(
-                "No mission target has been defined."
-            )
-        
+            raise ValueError("No mission target has been defined.")
+
     def clear(
         self,
     ) -> None:
@@ -187,7 +199,11 @@ class Targeting:
         self,
     ) -> dict[str, object]:
         """
-        Return the mission target as a dictionary.
+        Create a Targeting instance from a dictionary.
+
+        The mission target is constructed from the
+        supplied dictionary and stored in the new
+        Targeting instance.
         """
 
         self.validate()
@@ -224,13 +240,12 @@ class Targeting:
             ),
             mission_time=float(data["mission_time"]),
             max_acceleration=float(data["max_acceleration"]),
-            max_dynamic_pressure=float(
-                data["max_dynamic_pressure"]
-            ),
+            max_dynamic_pressure=float(data["max_dynamic_pressure"]),
         )
 
         return cls(target)
-    
+
+
 __all__ = [
     "MissionTarget",
     "Targeting",

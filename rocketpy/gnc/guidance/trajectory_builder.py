@@ -19,8 +19,11 @@ from rocketpy.gnc.navigation.quaternion import Quaternion
 
 class TrajectoryBuilder:
     """
-    Convert RocketPy flight state histories into
-    ReferenceTrajectory objects.
+    Reference trajectory builder.
+
+    The builder converts RocketPy flight state
+    histories into ReferenceTrajectory objects
+    used by the Guidance subsystem.
     """
 
     def from_flight(
@@ -30,6 +33,10 @@ class TrajectoryBuilder:
         """
         Build a reference trajectory from a RocketPy Flight.
 
+        The returned trajectory is constructed from the
+        flight solution stored in the supplied Flight
+        object.
+
         Parameters
         ----------
         flight : Any
@@ -38,7 +45,8 @@ class TrajectoryBuilder:
         Returns
         -------
         ReferenceTrajectory
-            Reference trajectory extracted from the simulation.
+            Reference trajectory constructed from the
+            supplied flight solution.
         """
 
         if not hasattr(
@@ -56,6 +64,11 @@ class TrajectoryBuilder:
         """
         Build a reference trajectory from a RocketPy solution.
 
+        The returned trajectory is constructed by
+        converting each solution state into a
+        reference waypoint.
+
+
         Parameters
         ----------
         solution : Any
@@ -64,7 +77,8 @@ class TrajectoryBuilder:
         Returns
         -------
         ReferenceTrajectory
-            Constructed reference trajectory.
+            Reference trajectory constructed from the
+            supplied RocketPy solution.
         """
 
         states = list(solution)
@@ -85,6 +99,11 @@ class TrajectoryBuilder:
     ) -> None:
         """
         Validate a RocketPy flight solution.
+
+        Ensures the supplied solution contains valid
+        state vectors with strictly increasing
+        timestamps.
+
 
         Parameters
         ----------
@@ -123,7 +142,10 @@ class TrajectoryBuilder:
         state: NDArray[np.float64] | list[float],
     ) -> Waypoint:
         """
-        Build a waypoint from a single RocketPy state.
+        Build a reference waypoint from a RocketPy state.
+
+        The returned waypoint is constructed from the
+        supplied RocketPy state vector.
 
         Parameters
         ----------
@@ -133,7 +155,8 @@ class TrajectoryBuilder:
         Returns
         -------
         Waypoint
-            Constructed waypoint.
+            Reference waypoint constructed from the
+            supplied state vector.
         """
 
         state = np.asarray(

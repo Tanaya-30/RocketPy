@@ -73,22 +73,13 @@ class PhaseManager:
 
         upward_velocity = -nav_state.vel_down
 
-        if (
-            nav_state.speed_ms
-            < config.rail_clear_velocity_ms
-        ):
+        if nav_state.speed_ms < config.rail_clear_velocity_ms:
             self._phase = FlightPhase.RAIL
 
-        elif (
-            nav_state.accel_body_z
-            > config.burnout_detection_accel
-        ):
+        elif nav_state.accel_body_z > config.burnout_detection_accel:
             self._phase = FlightPhase.POWERED
 
-        elif (
-            upward_velocity
-            > config.apogee_detection_vel_ms
-        ):
+        elif upward_velocity > config.apogee_detection_vel_ms:
             self._phase = FlightPhase.COAST
 
         elif nav_state.altitude_m > 1.0:

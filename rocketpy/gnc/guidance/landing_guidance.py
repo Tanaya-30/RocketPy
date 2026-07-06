@@ -30,7 +30,10 @@ class LandingGuidance:
         target: MissionTarget | None = None,
     ) -> None:
         """
-        Initialize the landing guidance.
+        Return the current landing target.
+
+        The returned mission target is retrieved from
+        the internally stored landing target.
         """
 
         self._target = target
@@ -51,15 +54,16 @@ class LandingGuidance:
     ) -> None:
         """
         Set the landing target.
+
+        The supplied mission target is validated and
+        stored as the current landing target.
         """
 
         if not isinstance(
             target,
             MissionTarget,
         ):
-            raise TypeError(
-                "target must be a MissionTarget."
-            )
+            raise TypeError("target must be a MissionTarget.")
 
         self._target = target
 
@@ -80,13 +84,18 @@ class LandingGuidance:
         """
 
         return self._target is not None
-    
+
     def compute_reference(
         self,
         nav_state: NavState,
     ) -> GuidanceReference:
         """
         Compute the landing guidance reference.
+
+        The returned guidance reference is computed
+        from the current navigation state and the
+        stored mission target.
+
 
         Parameters
         ----------
@@ -96,13 +105,12 @@ class LandingGuidance:
         Returns
         -------
         GuidanceReference
-            Landing guidance reference.
+            Landing guidance reference computed for
+            the current navigation state.
         """
 
         if self._target is None:
-            raise ValueError(
-                "Landing target has not been defined."
-            )
+            raise ValueError("Landing target has not been defined.")
 
         distance = self.horizontal_distance(
             nav_state,
@@ -120,9 +128,7 @@ class LandingGuidance:
 
         reference.target_altitude_m = 0.0
 
-        reference.estimated_apogee_m = (
-            nav_state.altitude_m
-        )
+        reference.estimated_apogee_m = nav_state.altitude_m
 
         return reference
 
@@ -131,7 +137,12 @@ class LandingGuidance:
         nav_state: NavState,
     ) -> float:
         """
-        Return the horizontal distance to the landing target.
+        Return the horizontal distance to the
+        landing target.
+
+        The returned distance is computed from the
+        current navigation position and the stored
+        landing target.
         """
 
         assert self._target is not None
@@ -146,36 +157,31 @@ class LandingGuidance:
 
         target = self._target.landing_position[:2]
 
-        return float(
-            np.linalg.norm(
-                target - current
-            )
-        )
+        return float(np.linalg.norm(target - current))
 
     def direction_vector(
-    self,
-    nav_state: NavState,
+        self,
+        nav_state: NavState,
     ) -> NDArray[np.float64]:
         """
-        Return the unit vector pointing toward the landing target.
+        Return the direction toward the landing target.
+
+        The returned unit vector is computed from the
+        current navigation position and the stored
+        landing target.
         """
 
         assert self._target is not None
 
-        direction = (
-            self._target.landing_position[:2]
-            - np.array(
-                [
-                    nav_state.pos_north,
-                    nav_state.pos_east,
-                ],
-                dtype=np.float64,
-            )
+        direction = self._target.landing_position[:2] - np.array(
+            [
+                nav_state.pos_north,
+                nav_state.pos_east,
+            ],
+            dtype=np.float64,
         )
 
-        norm = np.linalg.norm(
-            direction
-        )
+        norm = np.linalg.norm(direction)
 
         if norm < 1e-12:
             return np.zeros(
@@ -190,7 +196,11 @@ class LandingGuidance:
         nav_state: NavState,
     ) -> NDArray[np.float64]:
         """
-        Return the position error relative to the landing target.
+        Return the landing position error.
+
+        The returned position error is computed from
+        the current navigation position and the
+        stored landing target.
 
         Returns
         -------
@@ -212,6 +222,7 @@ class LandingGuidance:
         )
 
         return target - current
+
     def reset(
         self,
     ) -> None:
@@ -251,10 +262,7 @@ class LandingGuidance:
         """
 
         if self._target is None:
-            return (
-                f"{self.__class__.__name__}"
-                "(target=None)"
-            )
+            return f"{self.__class__.__name__}" "(target=None)"
 
         return (
             f"{self.__class__.__name__}"
@@ -265,7 +273,8 @@ class LandingGuidance:
             f"{self._target.target_apogee}"
             ")"
         )
-    
+
+
 __all__ = [
     "LandingGuidance",
 ]

@@ -38,6 +38,9 @@ class DispersionGuidance:
     ) -> MissionTarget | None:
         """
         Return the active mission target.
+
+        The returned mission target is retrieved from
+        the internally stored target.
         """
 
         return self._target
@@ -48,15 +51,16 @@ class DispersionGuidance:
     ) -> None:
         """
         Set the mission target.
+
+        The supplied mission target is validated and
+        stored as the current target.
         """
 
         if not isinstance(
             target,
             MissionTarget,
         ):
-            raise TypeError(
-                "target must be a MissionTarget."
-            )
+            raise TypeError("target must be a MissionTarget.")
 
         self._target = target
 
@@ -77,19 +81,21 @@ class DispersionGuidance:
         """
 
         return self._target is not None
-    
+
     def correction_vector(
         self,
         nav_state: NavState,
     ) -> NDArray[np.float64]:
         """
-        Compute the correction vector toward the target.
+        Compute the trajectory correction vector.
+
+        The returned correction vector is computed
+        from the current navigation state and the
+        stored mission target.
         """
 
         if self._target is None:
-            raise ValueError(
-                "Mission target has not been defined."
-            )
+            raise ValueError("Mission target has not been defined.")
 
         target = self._target.landing_position
 
@@ -110,17 +116,16 @@ class DispersionGuidance:
     ) -> float:
         """
         Compute the horizontal cross-track error.
+
+        The returned error is computed from the
+        trajectory correction vector.
         """
 
         correction = self.correction_vector(
             nav_state,
         )
 
-        return float(
-            np.linalg.norm(
-                correction[:2]
-            )
-        )
+        return float(np.linalg.norm(correction[:2]))
 
     def along_track_error(
         self,
@@ -128,15 +133,16 @@ class DispersionGuidance:
     ) -> float:
         """
         Compute the vertical tracking error.
+
+        The returned error is computed from the
+        trajectory correction vector.
         """
 
         correction = self.correction_vector(
             nav_state,
         )
 
-        return float(
-            correction[2]
-        )
+        return float(correction[2])
 
     def dispersion_radius(
         self,
@@ -144,6 +150,10 @@ class DispersionGuidance:
     ) -> float:
         """
         Estimate the landing dispersion radius.
+
+        The returned dispersion radius is computed
+        from the current horizontal error and
+        vehicle altitude.
         """
 
         horizontal = self.cross_track_error(
@@ -155,10 +165,7 @@ class DispersionGuidance:
             1.0,
         )
 
-        return (
-            0.05 * horizontal
-            + 0.01 * altitude
-        )
+        return 0.05 * horizontal + 0.01 * altitude
 
     def reset(
         self,
@@ -199,10 +206,7 @@ class DispersionGuidance:
         """
 
         if self._target is None:
-            return (
-                f"{self.__class__.__name__}"
-                "(target=None)"
-            )
+            return f"{self.__class__.__name__}" "(target=None)"
 
         return (
             f"{self.__class__.__name__}"
@@ -213,8 +217,8 @@ class DispersionGuidance:
             f"{self._target.target_apogee}"
             ")"
         )
-    
-    
+
+
 __all__ = [
     "DispersionGuidance",
 ]

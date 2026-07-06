@@ -24,6 +24,10 @@ class Waypoint:
     """
     Immutable reference waypoint.
 
+    The waypoint stores the desired vehicle state
+    at a specific mission time for trajectory
+    tracking.
+
     Parameters
     ----------
     time : float
@@ -49,7 +53,12 @@ class Waypoint:
     angular_velocity: NDArray[np.float64]
 
     def __post_init__(self) -> None:
-        """Validate waypoint contents."""
+        """
+        Validate the waypoint.
+
+        The supplied waypoint parameters are validated
+        and normalized before the waypoint is stored.
+        """
 
         if not np.isfinite(self.time):
             raise ValueError("Waypoint time must be finite.")
@@ -113,7 +122,10 @@ class Waypoint:
         name: str,
     ) -> None:
         """
-        Validate a 3D vector.
+        Validate a three-dimensional vector.
+
+        Returns the validated vector after verifying
+        its dimensions and finite values.
         """
 
         vector = np.asarray(
@@ -266,7 +278,10 @@ class ReferenceTrajectory:
         index: int,
     ) -> Waypoint:
         """
-        Return waypoint by index.
+        Return a waypoint by index.
+
+        The returned waypoint is retrieved from the
+        internally stored trajectory.
         """
 
         return self._waypoints[index]
@@ -276,6 +291,9 @@ class ReferenceTrajectory:
     ) -> Waypoint:
         """
         Return the first waypoint.
+
+        The returned waypoint is retrieved from the
+        beginning of the trajectory.
         """
 
         if not self._waypoints:
@@ -287,7 +305,10 @@ class ReferenceTrajectory:
         self,
     ) -> Waypoint:
         """
-        Return the final waypoint.
+        Return the last waypoint.
+
+        The returned waypoint is retrieved from the
+        end of the trajectory.
         """
 
         if not self._waypoints:
@@ -317,7 +338,10 @@ class ReferenceTrajectory:
         self,
     ) -> float:
         """
-        Mission duration.
+        Return the trajectory duration.
+
+        The returned duration is computed from the
+        first and last waypoint timestamps.
         """
 
         if self.is_empty():
@@ -330,6 +354,9 @@ class ReferenceTrajectory:
     ) -> None:
         """
         Validate the trajectory.
+
+        Ensures waypoint timestamps remain strictly
+        increasing throughout the trajectory.
         """
 
         previous_time = -np.inf
@@ -424,7 +451,10 @@ class ReferenceTrajectory:
         self,
     ) -> tuple[Waypoint, ...]:
         """
-        Return the trajectory waypoints as an immutable tuple.
+        Return the trajectory waypoints.
+
+        The returned tuple is constructed from the
+        internally stored waypoint sequence.
         """
 
         return tuple(self._waypoints)
