@@ -17,7 +17,8 @@ from rocketpy.gnc.navigation.quaternion import Quaternion
 
 
 class IMUIntegrator:
-    """Integrate strapdown IMU measurements into navigation state.
+    """
+    Integrate strapdown IMU measurements into navigation state.
 
     The integrator propagates attitude in the body-to-navigation frame using the
     Hamilton quaternion convention and updates velocity and position in the
@@ -31,7 +32,8 @@ class IMUIntegrator:
         initial_attitude: Quaternion,
         gravity: NDArray[np.float64] | list[float] | tuple[float, ...],
     ) -> None:
-        """Initialize the integrator with an initial navigation state.
+        """
+        Initialize the integrator with an initial navigation state.
 
         Parameters
         ----------
@@ -44,9 +46,15 @@ class IMUIntegrator:
         gravity : array-like of shape (3,)
             Gravity vector expressed in the navigation frame.
         """
-        self._initial_position = self._validate_vector(initial_position, "initial_position")
-        self._initial_velocity = self._validate_vector(initial_velocity, "initial_velocity")
-        self._initial_attitude = self._validate_quaternion(initial_attitude, "initial_attitude")
+        self._initial_position = self._validate_vector(
+            initial_position, "initial_position"
+        )
+        self._initial_velocity = self._validate_vector(
+            initial_velocity, "initial_velocity"
+        )
+        self._initial_attitude = self._validate_quaternion(
+            initial_attitude, "initial_attitude"
+        )
         self._initial_gravity = self._validate_vector(gravity, "gravity")
 
         self._position = self._initial_position.copy()
@@ -56,17 +64,32 @@ class IMUIntegrator:
 
     @property
     def position(self) -> NDArray[np.float64]:
-        """Return a copy of the current position state."""
+        """
+        Return the current position state.
+
+        The returned position vector is copied from the
+        internally stored navigation position.
+        """
         return self._position.copy()
 
     @property
     def velocity(self) -> NDArray[np.float64]:
-        """Return a copy of the current velocity state."""
+        """
+        Return the current velocity state.
+
+        The returned velocity vector is copied from the
+        internally stored navigation velocity.
+        """
         return self._velocity.copy()
 
     @property
     def attitude(self) -> Quaternion:
-        """Return a copy of the current attitude quaternion."""
+        """
+        Return the current attitude quaternion.
+
+        The returned quaternion is copied from the
+        internally stored navigation attitude.
+        """
         return self._attitude.copy()
 
     def update(
@@ -75,7 +98,13 @@ class IMUIntegrator:
         accel: NDArray[np.float64] | list[float] | tuple[float, ...],
         dt: float | np.floating[Any],
     ) -> tuple[NDArray[np.float64], NDArray[np.float64], Quaternion]:
-        """Propagate the navigation state by one IMU integration step.
+        """ "
+        Propagate the navigation state by one IMU integration step.
+
+        The updated position, velocity and attitude are
+        computed from the supplied IMU gyroscope and
+        accelerometer measurements together with the
+        current navigation state.
 
         Parameters
         ----------
@@ -111,19 +140,34 @@ class IMUIntegrator:
 
         old_velocity = self._velocity.copy()
         self._velocity = self._velocity + nav_accel * np.float64(dt_value)
-        self._position = self._position + old_velocity * np.float64(dt_value) + 0.5 * nav_accel * np.float64(dt_value) ** 2
+        self._position = (
+            self._position
+            + old_velocity * np.float64(dt_value)
+            + 0.5 * nav_accel * np.float64(dt_value) ** 2
+        )
 
         return self.get_state()
 
     def reset(self) -> None:
-        """Reset the integrator to its initial state."""
+        """
+        Reset the integrator.
+
+        The navigation state is restored from the
+        internally stored initial position, velocity,
+        attitude and gravity values.
+        """
         self._position = self._initial_position.copy()
         self._velocity = self._initial_velocity.copy()
         self._attitude = self._initial_attitude.normalized().copy()
         self._gravity = self._initial_gravity.copy()
 
     def get_state(self) -> tuple[NDArray[np.float64], NDArray[np.float64], Quaternion]:
-        """Return the current state as position, velocity, and attitude."""
+        """
+        Return the current navigation state.
+
+        The returned position, velocity and attitude are
+        copied from the internally stored navigation state.
+        """
         return self.position, self.velocity, self.attitude
 
     def set_state(
@@ -132,7 +176,11 @@ class IMUIntegrator:
         velocity: NDArray[np.float64] | list[float] | tuple[float, ...],
         attitude: Quaternion,
     ) -> None:
-        """Set the integrator state.
+        """
+        Replace the navigation state.
+
+        The supplied position, velocity and attitude are
+        validated and copied into the internal state.
 
         Parameters
         ----------
@@ -145,14 +193,21 @@ class IMUIntegrator:
         """
         self._position = self._validate_vector(position, "position")
         self._velocity = self._validate_vector(velocity, "velocity")
-        self._attitude = self._validate_quaternion(attitude, "attitude").normalized().copy()
+        self._attitude = (
+            self._validate_quaternion(attitude, "attitude").normalized().copy()
+        )
 
     def _validate_vector(
         self,
         vector: NDArray[np.float64] | list[float] | tuple[float, ...],
         name: str,
     ) -> NDArray[np.float64]:
-        """Validate a 3D vector and return it as float64."""
+        """
+        Validate a three-dimensional vector.
+
+        Returns the validated vector converted to
+        float64 for IMU integration computations.
+        """
         values = np.asarray(vector, dtype=np.float64).reshape(-1)
         if values.size != 3:
             raise ValueError(f"{name} must contain exactly three components.")
@@ -161,13 +216,23 @@ class IMUIntegrator:
         return np.asarray(values, dtype=np.float64)
 
     def _validate_quaternion(self, quaternion: Any, name: str) -> Quaternion:
-        """Validate and return a quaternion instance."""
+        """
+        Validate a quaternion.
+
+        Returns the validated quaternion instance
+        unchanged for subsequent computations.
+
+        """
         if not isinstance(quaternion, Quaternion):
             raise TypeError(f"{name} must be a Quaternion instance.")
         return quaternion
 
     def _validate_dt(self, dt: float | np.floating[Any]) -> np.float64:
-        """Validate the time step."""
+        """
+        Validate the integration time step.
+
+        Returns the validated timestep as float64.
+        """
         dt_value = np.float64(dt)
         if not np.isfinite(dt_value):
             raise ValueError("dt must be finite.")

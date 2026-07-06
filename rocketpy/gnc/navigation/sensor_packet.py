@@ -6,7 +6,6 @@ time-stamped set of measurements received from onboard sensors.
 """
 
 from dataclasses import dataclass
-
 import numpy as np
 
 
@@ -40,7 +39,14 @@ class SensorPacket:
     barometric_altitude: float
 
     def __post_init__(self):
-        """Validate sensor packet contents."""
+        """
+        Validate the sensor packet.
+
+        The supplied timestamp and sensor measurements
+        are validated before the packet is accepted.
+        """
+        if not np.isfinite(self.timestamp):
+            raise ValueError("Timestamp must be finite.")
 
         if self.timestamp < 0:
             raise ValueError("Timestamp must be non-negative.")
@@ -61,9 +67,7 @@ class SensorPacket:
         )
 
         if not np.isfinite(self.barometric_altitude):
-            raise ValueError(
-                "Barometric altitude must be finite."
-            )
+            raise ValueError("Barometric altitude must be finite.")
 
     @staticmethod
     def _validate_vector(
@@ -71,7 +75,10 @@ class SensorPacket:
         name: str,
     ):
         """
-        Validate a 3-element sensor vector.
+        Validate a three-dimensional sensor vector.
+
+        Returns the validated sensor vector after
+        verifying its shape and finite values.
 
         Parameters
         ----------
@@ -82,16 +89,18 @@ class SensorPacket:
             Name of the sensor.
         """
         if not isinstance(vector, np.ndarray):
-            raise TypeError(
-                f"{name} must be a NumPy array."
-            )
+            raise TypeError(f"{name} must be a NumPy array.")
 
         if vector.shape != (3,):
-            raise ValueError(
-                f"{name} must have shape (3,), got {vector.shape}."
-            )
+            raise ValueError(f"{name} must have shape (3,), got {vector.shape}.")
 
         if not np.all(np.isfinite(vector)):
-            raise ValueError(
-                f"{name} contains non-finite values."
-            )
+            raise ValueError(f"{name} contains non-finite values.")
+
+    """
+    Immutable sensor measurement packet.
+
+    The packet stores a single time-stamped set of
+    accelerometer, gyroscope, GPS and barometric
+    measurements used by the Navigation subsystem.
+    """

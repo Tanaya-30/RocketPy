@@ -18,7 +18,11 @@ def validate_vector(
     size: int = 3,
     name: str = "vector",
 ) -> NDArray[np.float64]:
-    """Validate a finite vector.
+    """
+    Validate a finite vector.
+
+    Returns the validated vector converted to a
+    float64 NumPy array.
 
     Parameters
     ----------
@@ -42,14 +46,10 @@ def validate_vector(
     values = np.asarray(vector, dtype=np.float64).reshape(-1)
 
     if values.size != size:
-        raise ValueError(
-            f"{name} must contain exactly {size} components."
-        )
+        raise ValueError(f"{name} must contain exactly {size} components.")
 
     if not np.all(np.isfinite(values)):
-        raise ValueError(
-            f"{name} must contain only finite values."
-        )
+        raise ValueError(f"{name} must contain only finite values.")
 
     return values.copy()
 
@@ -60,7 +60,8 @@ def validate_matrix(
     shape: tuple[int, int],
     name: str = "matrix",
 ) -> NDArray[np.float64]:
-    """Validate a finite matrix.
+    """
+    Validate a finite matrix.
 
     Parameters
     ----------
@@ -84,23 +85,21 @@ def validate_matrix(
     values = np.asarray(matrix, dtype=np.float64)
 
     if values.shape != shape:
-        raise ValueError(
-            f"{name} must have shape {shape}."
-        )
+        raise ValueError(f"{name} must have shape {shape}.")
 
     if not np.all(np.isfinite(values)):
-        raise ValueError(
-            f"{name} must contain only finite values."
-        )
+        raise ValueError(f"{name} must contain only finite values.")
 
     return values.copy()
+
 
 def validate_quaternion(
     quaternion: Any,
     *,
     name: str = "quaternion",
 ) -> Any:
-    """Validate a Quaternion instance.
+    """
+    Validate a Quaternion instance.
 
     Parameters
     ----------
@@ -124,14 +123,10 @@ def validate_quaternion(
     from rocketpy.gnc.navigation.quaternion import Quaternion
 
     if not isinstance(quaternion, Quaternion):
-        raise TypeError(
-            f"{name} must be a Quaternion instance."
-        )
+        raise TypeError(f"{name} must be a Quaternion instance.")
 
     if not quaternion.is_normalized():
-        raise ValueError(
-            f"{name} must be normalized."
-        )
+        raise ValueError(f"{name} must be normalized.")
 
     return quaternion
 
@@ -139,7 +134,8 @@ def validate_quaternion(
 def validate_dt(
     dt: float | np.floating[Any],
 ) -> np.float64:
-    """Validate an integration time step.
+    """
+    Validate an integration time step.
 
     Parameters
     ----------
@@ -159,14 +155,10 @@ def validate_dt(
     value = np.float64(dt)
 
     if not np.isfinite(value):
-        raise ValueError(
-            "dt must be finite."
-        )
+        raise ValueError("dt must be finite.")
 
     if value <= 0.0:
-        raise ValueError(
-            "dt must be greater than zero."
-        )
+        raise ValueError("dt must be greater than zero.")
 
     return value
 
@@ -174,7 +166,8 @@ def validate_dt(
 def validate_timestamp(
     timestamp: float | np.floating[Any],
 ) -> np.float64:
-    """Validate a timestamp.
+    """
+    Validate a timestamp.
 
     Parameters
     ----------
@@ -194,14 +187,10 @@ def validate_timestamp(
     value = np.float64(timestamp)
 
     if not np.isfinite(value):
-        raise ValueError(
-            "timestamp must be finite."
-        )
+        raise ValueError("timestamp must be finite.")
 
     if value < 0.0:
-        raise ValueError(
-            "timestamp must be non-negative."
-        )
+        raise ValueError("timestamp must be non-negative.")
 
     return value
 
@@ -212,7 +201,8 @@ def validate_covariance(
     size: int,
     name: str = "covariance",
 ) -> NDArray[np.float64]:
-    """Validate a covariance matrix.
+    """
+    Validate a covariance matrix.
 
     Parameters
     ----------
@@ -240,43 +230,42 @@ def validate_covariance(
     )
 
     if not np.allclose(values, values.T, atol=1e-12):
-        raise ValueError(
-            f"{name} must be symmetric."
-        )
+        raise ValueError(f"{name} must be symmetric.")
 
     if np.any(np.diag(values) < 0.0):
-        raise ValueError(
-            f"{name} diagonal entries must be non-negative."
-        )
+        raise ValueError(f"{name} diagonal entries must be non-negative.")
 
     return values.copy()
 
+
 def validate_position(
     position: NDArray[np.float64] | list[float] | tuple[float, ...],
-    ) -> NDArray[np.float64]:
-        """Validate a navigation-frame position vector.
+) -> NDArray[np.float64]:
+    """
+    Validate a navigation-frame position vector.
 
-        Parameters
-        ----------
-        position : array-like of shape (3,)
-            Position vector.
+    Parameters
+    ----------
+    position : array-like of shape (3,)
+        Position vector.
 
-        Returns
-        -------
-        numpy.ndarray
-            Validated position vector.
-        """
-        return validate_vector(
-            position,
-            size=3,
-            name="position",
-        )
+    Returns
+    -------
+    numpy.ndarray
+        Validated position vector.
+    """
+    return validate_vector(
+        position,
+        size=3,
+        name="position",
+    )
 
 
 def validate_velocity(
     velocity: NDArray[np.float64] | list[float] | tuple[float, ...],
 ) -> NDArray[np.float64]:
-    """Validate a navigation-frame velocity vector.
+    """
+    Validate a navigation-frame velocity vector.
 
     Parameters
     ----------
@@ -298,7 +287,8 @@ def validate_velocity(
 def validate_acceleration(
     acceleration: NDArray[np.float64] | list[float] | tuple[float, ...],
 ) -> NDArray[np.float64]:
-    """Validate an acceleration vector.
+    """
+    Validate an acceleration vector.
 
     Parameters
     ----------
@@ -318,11 +308,10 @@ def validate_acceleration(
 
 
 def validate_angular_velocity(
-    angular_velocity: NDArray[np.float64]
-    | list[float]
-    | tuple[float, ...],
+    angular_velocity: NDArray[np.float64] | list[float] | tuple[float, ...],
 ) -> NDArray[np.float64]:
-    """Validate an angular velocity vector.
+    """
+    Validate an angular velocity vector.
 
     Parameters
     ----------
@@ -340,10 +329,12 @@ def validate_angular_velocity(
         name="angular_velocity",
     )
 
+
 def validate_latitude(
     latitude: float | np.floating[Any],
 ) -> np.float64:
-    """Validate a geodetic latitude.
+    """
+    Validate a geodetic latitude.
 
     Parameters
     ----------
@@ -366,9 +357,7 @@ def validate_latitude(
         raise ValueError("latitude must be finite.")
 
     if not (-90.0 <= value <= 90.0):
-        raise ValueError(
-            "latitude must be between -90 and 90 degrees."
-        )
+        raise ValueError("latitude must be between -90 and 90 degrees.")
 
     return value
 
@@ -376,7 +365,8 @@ def validate_latitude(
 def validate_longitude(
     longitude: float | np.floating[Any],
 ) -> np.float64:
-    """Validate a geodetic longitude.
+    """
+    Validate a geodetic longitude.
 
     Parameters
     ----------
@@ -399,9 +389,7 @@ def validate_longitude(
         raise ValueError("longitude must be finite.")
 
     if not (-180.0 <= value <= 180.0):
-        raise ValueError(
-            "longitude must be between -180 and 180 degrees."
-        )
+        raise ValueError("longitude must be between -180 and 180 degrees.")
 
     return value
 
@@ -409,7 +397,8 @@ def validate_longitude(
 def validate_altitude(
     altitude: float | np.floating[Any],
 ) -> np.float64:
-    """Validate an altitude measurement.
+    """
+    Validate an altitude measurement.
 
     Parameters
     ----------
@@ -437,7 +426,8 @@ def validate_altitude(
 def validate_pressure(
     pressure: float | np.floating[Any],
 ) -> np.float64:
-    """Validate an atmospheric pressure measurement.
+    """
+    Validate an atmospheric pressure measurement.
 
     Parameters
     ----------
@@ -460,9 +450,7 @@ def validate_pressure(
         raise ValueError("pressure must be finite.")
 
     if value <= 0.0:
-        raise ValueError(
-            "pressure must be greater than zero."
-        )
+        raise ValueError("pressure must be greater than zero.")
 
     return value
 

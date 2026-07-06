@@ -19,7 +19,8 @@ from rocketpy.gnc.navigation.frames import validate_vector
 
 
 class SensorFusion:
-    """Collect and validate the latest sensor measurements.
+    """
+    Collect and validate the latest sensor measurements.
 
     The class maintains the most recent validated reading from each supported
     sensor and exposes it through a small access interface. Timestamps must be
@@ -27,7 +28,12 @@ class SensorFusion:
     """
 
     def __init__(self) -> None:
-        """Initialize the fusion container with empty measurements."""
+        """
+        Initialize the sensor fusion container.
+
+        The internal measurement storage is initialized
+        with no sensor readings or timestamps.
+        """
         self._latest_imu: IMUPacket | None = None
         self._latest_gnss: GNSSPacket | None = None
         self._latest_barometer: BaroPacket | None = None
@@ -42,7 +48,13 @@ class SensorFusion:
         accel: NDArray[np.float64] | list[float] | tuple[float, ...],
         timestamp: float | np.floating[Any],
     ) -> None:
-        """Update the latest IMU measurement.
+        """
+        update the latest IMU measurement.
+
+        The supplied gyroscope and accelerometer
+        measurements are validated and stored as the
+        current IMU measurement.
+
 
         Parameters
         ----------
@@ -83,7 +95,12 @@ class SensorFusion:
         altitude: float | np.floating[Any],
         timestamp: float | np.floating[Any],
     ) -> None:
-        """Update the latest GNSS measurement.
+        """
+        Update the latest GNSS measurement.
+
+        The supplied latitude, longitude, altitude and
+        timestamp are validated and stored as the
+        current GNSS measurement.
 
         Parameters
         ----------
@@ -123,7 +140,13 @@ class SensorFusion:
         pressure: float | np.floating[Any],
         timestamp: float | np.floating[Any],
     ) -> None:
-        """Update the latest barometer measurement.
+        """
+        Update the latest barometer measurement.
+
+        The supplied pressure measurement and timestamp
+        are validated and stored as the current
+        barometer measurement.
+
 
         Parameters
         ----------
@@ -146,8 +169,16 @@ class SensorFusion:
         )
         self._barometer_timestamp = timestamp_value
 
-    def get_latest_measurements(self) -> dict[str, IMUPacket | GNSSPacket | BaroPacket | None]:
-        """Return the latest validated measurements for all sensors."""
+    def get_latest_measurements(
+        self,
+    ) -> dict[str, IMUPacket | GNSSPacket | BaroPacket | None]:
+        """
+        Return the latest sensor measurements.
+
+        The returned measurement packets are retrieved
+        from the internally stored IMU, GNSS and
+        barometer measurements.
+        """
         return {
             "imu": self._latest_imu,
             "gnss": self._latest_gnss,
@@ -155,7 +186,9 @@ class SensorFusion:
         }
 
     def clear(self) -> None:
-        """Clear all stored measurements and timestamps."""
+        """
+        Clear all stored measurements and timestamps.
+        """
         self._latest_imu = None
         self._latest_gnss = None
         self._latest_barometer = None
@@ -169,21 +202,40 @@ class SensorFusion:
         vector: NDArray[np.float64] | list[float] | tuple[float, ...],
         name: str,
     ) -> NDArray[np.float64]:
-        """Validate a 3-component vector and return it as float64."""
+        """
+        Validate a three-dimensional vector.
+
+        Returns the validated vector converted to
+        float64 for sensor processing.
+        """
         values = validate_vector(vector)
         if not np.all(np.isfinite(values)):
             raise ValueError(f"{name} must contain only finite values.")
         return values.astype(np.float64, copy=False)
 
-    def _validate_scalar(self, value: float | np.floating[Any], name: str) -> np.float64:
-        """Validate a scalar measurement and return it as float64."""
+    def _validate_scalar(
+        self, value: float | np.floating[Any], name: str
+    ) -> np.float64:
+        """
+        Validate a scalar measurement.
+
+        Returns the validated scalar converted to
+        float64.
+        """
         scalar = np.float64(value)
         if not np.isfinite(scalar):
             raise ValueError(f"{name} must be finite.")
         return scalar
 
-    def _validate_timestamp(self, timestamp: float | np.floating[Any], name: str) -> np.float64:
-        """Validate a timestamp and return it as float64."""
+    def _validate_timestamp(
+        self, timestamp: float | np.floating[Any], name: str
+    ) -> np.float64:
+        """
+        Validate a measurement timestamp.
+
+        Returns the validated timestamp converted to
+        float64.
+        """
         value = np.float64(timestamp)
         if not np.isfinite(value):
             raise ValueError(f"{name} must be finite.")
@@ -192,12 +244,30 @@ class SensorFusion:
         return value
 
     def _validate_monotonic_timestamp(self, timestamp: np.float64, sensor: str) -> None:
-        """Ensure timestamps are strictly increasing for an individual sensor."""
-        if sensor == "imu" and self._imu_timestamp is not None and timestamp <= self._imu_timestamp:
+        """
+        Validate timestamp ordering.
+
+        Ensures the supplied timestamp is strictly
+        greater than the previously stored timestamp
+        for the specified sensor stream.
+        """
+        if (
+            sensor == "imu"
+            and self._imu_timestamp is not None
+            and timestamp <= self._imu_timestamp
+        ):
             raise ValueError("IMU timestamps must be strictly increasing.")
-        if sensor == "gnss" and self._gnss_timestamp is not None and timestamp <= self._gnss_timestamp:
+        if (
+            sensor == "gnss"
+            and self._gnss_timestamp is not None
+            and timestamp <= self._gnss_timestamp
+        ):
             raise ValueError("GNSS timestamps must be strictly increasing.")
-        if sensor == "barometer" and self._barometer_timestamp is not None and timestamp <= self._barometer_timestamp:
+        if (
+            sensor == "barometer"
+            and self._barometer_timestamp is not None
+            and timestamp <= self._barometer_timestamp
+        ):
             raise ValueError("Barometer timestamps must be strictly increasing.")
 
 

@@ -60,10 +60,7 @@ class Waypoint:
         object.__setattr__(
             self,
             "position",
-            np.asarray(
-                self.position,
-                dtype=np.float64,
-            ),
+            np.asarray(self.position, dtype=np.float64),
         )
 
         object.__setattr__(

@@ -7,6 +7,7 @@ integrator and Extended Kalman Filter.
 """
 
 from __future__ import annotations
+
 import numpy as np
 from numpy.typing import NDArray
 
@@ -26,19 +27,14 @@ class SensorPipeline:
 
     def __init__(
         self,
-        initial_position: NDArray[np.float64]
-        | list[float]
-        | tuple[float, ...]
-        | None = None,
-        initial_velocity: NDArray[np.float64]
-        | list[float]
-        | tuple[float, ...]
-        | None = None,
+        initial_position: (
+            NDArray[np.float64] | list[float] | tuple[float, ...] | None
+        ) = None,
+        initial_velocity: (
+            NDArray[np.float64] | list[float] | tuple[float, ...] | None
+        ) = None,
         initial_attitude: Quaternion | None = None,
-        gravity: NDArray[np.float64]
-        | list[float]
-        | tuple[float, ...]
-        | None = None,
+        gravity: NDArray[np.float64] | list[float] | tuple[float, ...] | None = None,
     ) -> None:
         """Initialize the navigation pipeline."""
 
@@ -87,9 +83,7 @@ class SensorPipeline:
         """
 
         if not isinstance(packet, SensorPacket):
-            raise TypeError(
-                "packet must be a SensorPacket instance."
-            )
+            raise TypeError("packet must be a SensorPacket instance.")
 
         if self._last_timestamp is None:
             dt = 0.01
@@ -97,9 +91,7 @@ class SensorPipeline:
             dt = packet.timestamp - self._last_timestamp
 
         if dt <= 0.0:
-            raise ValueError(
-                "Sensor packet timestamps must be strictly increasing."
-            )
+            raise ValueError("Sensor packet timestamps must be strictly increasing.")
 
         self._last_timestamp = packet.timestamp
 
@@ -127,7 +119,10 @@ class SensorPipeline:
 
     def get_state(self) -> NDArray[np.float64]:
         """
-        Return the current estimated navigation state.
+        Return the current navigation state estimate.
+
+        The returned state vector is retrieved from the
+        internally stored Extended Kalman Filter state.
         """
         return self._ekf.get_state()
 
@@ -138,6 +133,7 @@ class SensorPipeline:
         self._integrator.reset()
         self._ekf.reset()
         self._last_timestamp = None
+
 
 __all__ = [
     "SensorPipeline",

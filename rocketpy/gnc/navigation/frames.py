@@ -23,7 +23,11 @@ WGS84_E2 = np.float64(1.0 - (WGS84_B / WGS84_A) ** 2)
 
 
 def _validate_quaternion(quaternion: Any) -> Quaternion:
-    """Validate and return a quaternion instance.
+    """
+    Validate and return a quaternion instance.
+
+    The validated quaternion object is returned
+    unchanged for subsequent frame transformations.
 
     Parameters
     ----------
@@ -49,7 +53,12 @@ def _validate_geodetic_coordinates(
     latitude: float | np.floating[Any],
     longitude: float | np.floating[Any],
 ) -> tuple[np.float64, np.float64]:
-    """Validate and normalize geodetic coordinates in degrees."""
+    """
+    Validate geodetic coordinates.
+
+    Returns the validated latitude and longitude
+    converted to float64 values.
+    """
     lat = np.float64(latitude)
     lon = np.float64(longitude)
     if not np.isfinite(lat) or not np.isfinite(lon):
@@ -61,23 +70,29 @@ def _validate_geodetic_coordinates(
     return lat, lon
 
 
-def validate_vector(vector: NDArray[np.float64] | list[float] | tuple[float, ...]) -> NDArray[np.float64]:
-    """Validate and normalize a 3D vector to a float64 numpy array.
+def validate_vector(
+    vector: NDArray[np.float64] | list[float] | tuple[float, ...],
+) -> NDArray[np.float64]:
+    """
+    Validate a three-dimensional vector.
 
-    Parameters
-    ----------
-    vector : array-like of shape (3,)
-        A Cartesian vector in any supported coordinate frame.
+    Returns the validated vector converted to a
+    float64 NumPy array.
 
-    Returns
-    -------
-    numpy.ndarray
-        A float64 array of shape (3,).
+        Parameters
+        ----------
+        vector : array-like of shape (3,)
+            A Cartesian vector in any supported coordinate frame.
 
-    Raises
-    ------
-    ValueError
-        If the vector does not contain exactly three finite values.
+        Returns
+        -------
+        numpy.ndarray
+            A float64 array of shape (3,).
+
+        Raises
+        ------
+        ValueError
+            If the vector does not contain exactly three finite values.
     """
     values = np.asarray(vector, dtype=np.float64).reshape(-1)
     if values.size != 3:
@@ -120,8 +135,14 @@ def validate_rotation_matrix(matrix: NDArray[np.float64]) -> NDArray[np.float64]
     return values.astype(np.float64, copy=False)
 
 
-def enu_to_ned(vector: NDArray[np.float64] | list[float] | tuple[float, ...]) -> NDArray[np.float64]:
-    """Convert a vector from the ENU frame to the NED frame.
+def enu_to_ned(
+    vector: NDArray[np.float64] | list[float] | tuple[float, ...],
+) -> NDArray[np.float64]:
+    """
+    Convert a vector from the ENU frame to the NED frame.
+
+    The returned vector is computed by swapping the
+    East/North components and inverting the Up axis.
 
     Parameters
     ----------
@@ -137,7 +158,9 @@ def enu_to_ned(vector: NDArray[np.float64] | list[float] | tuple[float, ...]) ->
     return np.array([values[1], values[0], -values[2]], dtype=np.float64)
 
 
-def ned_to_enu(vector: NDArray[np.float64] | list[float] | tuple[float, ...]) -> NDArray[np.float64]:
+def ned_to_enu(
+    vector: NDArray[np.float64] | list[float] | tuple[float, ...],
+) -> NDArray[np.float64]:
     """Convert a vector from the NED frame to the ENU frame.
 
     Parameters
@@ -185,8 +208,16 @@ def ned_to_ecef(
     sin_lon = np.sin(lon_rad)
     cos_lon = np.cos(lon_rad)
 
-    x = -sin_lat * cos_lon * values[0] - sin_lon * values[1] - cos_lat * cos_lon * values[2]
-    y = -sin_lat * sin_lon * values[0] + cos_lon * values[1] - cos_lat * sin_lon * values[2]
+    x = (
+        -sin_lat * cos_lon * values[0]
+        - sin_lon * values[1]
+        - cos_lat * cos_lon * values[2]
+    )
+    y = (
+        -sin_lat * sin_lon * values[0]
+        + cos_lon * values[1]
+        - cos_lat * sin_lon * values[2]
+    )
     z = cos_lat * values[0] - sin_lat * values[2]
     return np.array([x, y, z], dtype=np.float64)
 
@@ -222,9 +253,17 @@ def ecef_to_ned(
     sin_lon = np.sin(lon_rad)
     cos_lon = np.cos(lon_rad)
 
-    north = -sin_lat * cos_lon * values[0] - sin_lat * sin_lon * values[1] + cos_lat * values[2]
+    north = (
+        -sin_lat * cos_lon * values[0]
+        - sin_lat * sin_lon * values[1]
+        + cos_lat * values[2]
+    )
     east = -sin_lon * values[0] + cos_lon * values[1]
-    down = -cos_lat * cos_lon * values[0] - cos_lat * sin_lon * values[1] - sin_lat * values[2]
+    down = (
+        -cos_lat * cos_lon * values[0]
+        - cos_lat * sin_lon * values[1]
+        - sin_lat * values[2]
+    )
     return np.array([north, east, down], dtype=np.float64)
 
 
@@ -277,8 +316,8 @@ def ned_to_body(
 def body_to_ecef(
     vector: NDArray[np.float64] | list[float] | tuple[float, ...],
     quaternion: Quaternion,
-    latitude: float | np.floating[Any] ,
-    longitude: float | np.floating[Any] ,
+    latitude: float | np.floating[Any],
+    longitude: float | np.floating[Any],
 ) -> NDArray[np.float64]:
     """Rotate a vector from the body frame to the ECEF frame.
 
@@ -307,7 +346,7 @@ def body_to_ecef(
 def ecef_to_body(
     vector: NDArray[np.float64] | list[float] | tuple[float, ...],
     quaternion: Quaternion,
-    latitude: float | np.floating[Any] ,
+    latitude: float | np.floating[Any],
     longitude: float | np.floating[Any],
 ) -> NDArray[np.float64]:
     """Rotate a vector from the ECEF frame to the body frame.

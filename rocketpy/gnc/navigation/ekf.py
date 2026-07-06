@@ -43,28 +43,25 @@ class ExtendedKalmanFilter:
         self._state = self._initial_state()
         self._covariance = self._initial_covariance()
 
-        self._process_noise = (
-            np.eye(self.STATE_SIZE, dtype=np.float64)
-            * np.float64(1e-3)
+        self._process_noise = np.eye(self.STATE_SIZE, dtype=np.float64) * np.float64(
+            1e-3
         )
 
-        self._gnss_measurement_noise = (
-            np.eye(3, dtype=np.float64)
-            * np.float64(1e-2)
-        )
+        self._gnss_measurement_noise = np.eye(3, dtype=np.float64) * np.float64(1e-2)
 
         self._barometer_measurement_noise = np.array(
             [[1e-2]],
             dtype=np.float64,
         )
-    
+
     def predict(
         self,
         gyro: NDArray[np.float64] | list[float] | tuple[float, ...],
         accel: NDArray[np.float64] | list[float] | tuple[float, ...],
         dt: float | np.floating[Any],
     ) -> NDArray[np.float64]:
-        """Propagate the EKF state using IMU measurements.
+        """
+        Propagate the EKF state using IMU measurements.
 
         Parameters
         ----------
@@ -84,9 +81,7 @@ class ExtendedKalmanFilter:
         accel_vector = self._validate_vector(accel, "accel")
         dt_value = self._validate_dt(dt)
 
-        quaternion = Quaternion.from_numpy(
-            self._state[6:10]
-        ).normalized()
+        quaternion = Quaternion.from_numpy(self._state[6:10]).normalized()
 
         integrator = IMUIntegrator(
             initial_position=self._state[0:3],
@@ -111,25 +106,21 @@ class ExtendedKalmanFilter:
         transition = self._state_transition_matrix(dt_value)
 
         self._covariance = (
-            transition
-            @ self._covariance
-            @ transition.T
-            + self._process_noise
+            transition @ self._covariance @ transition.T + self._process_noise
         )
 
-        self._covariance = self._symmetrize_covariance(
-            self._covariance
-        )
+        self._covariance = self._symmetrize_covariance(self._covariance)
 
         self._state = predicted_state
 
         return self.get_state()
-    
+
     def update_gnss(
         self,
         position: NDArray[np.float64] | list[float] | tuple[float, ...],
     ) -> NDArray[np.float64]:
-        """Correct the navigation state using a GNSS position measurement.
+        """
+        Correct the navigation state using a GNSS position measurement.
 
         Parameters
         ----------
@@ -145,21 +136,14 @@ class ExtendedKalmanFilter:
 
         measurement_matrix = self._position_measurement_matrix()
 
-        innovation = (
-            measurement
-            - measurement_matrix @ self._state
-        )
+        innovation = measurement - measurement_matrix @ self._state
 
         innovation_covariance = (
-            measurement_matrix
-            @ self._covariance
-            @ measurement_matrix.T
+            measurement_matrix @ self._covariance @ measurement_matrix.T
             + self._gnss_measurement_noise
         )
 
-        innovation_covariance = self._symmetrize_covariance(
-            innovation_covariance
-        )
+        innovation_covariance = self._symmetrize_covariance(innovation_covariance)
 
         kalman_gain = self._kalman_gain(
             innovation_covariance,
@@ -169,11 +153,7 @@ class ExtendedKalmanFilter:
         self._state += kalman_gain @ innovation
 
         self._state[6:10] = (
-            Quaternion.from_numpy(
-                self._state[6:10]
-            )
-            .normalized()
-            .as_numpy()
+            Quaternion.from_numpy(self._state[6:10]).normalized().as_numpy()
         )
 
         identity = np.eye(
@@ -184,25 +164,20 @@ class ExtendedKalmanFilter:
         joseph = identity - kalman_gain @ measurement_matrix
 
         self._covariance = (
-            joseph
-            @ self._covariance
-            @ joseph.T
-            + kalman_gain
-            @ self._gnss_measurement_noise
-            @ kalman_gain.T
+            joseph @ self._covariance @ joseph.T
+            + kalman_gain @ self._gnss_measurement_noise @ kalman_gain.T
         )
 
-        self._covariance = self._symmetrize_covariance(
-            self._covariance
-        )
+        self._covariance = self._symmetrize_covariance(self._covariance)
 
         return self.get_state()
-    
+
     def update_barometer(
         self,
         altitude: float | np.floating[Any],
     ) -> NDArray[np.float64]:
-        """Correct the navigation state using a barometer altitude measurement."""
+        """
+        Correct the navigation state using a barometer altitude measurement."""
         altitude_value = self._validate_scalar(
             altitude,
             "altitude",
@@ -216,15 +191,11 @@ class ExtendedKalmanFilter:
         )
 
         innovation_covariance = (
-            measurement_matrix
-            @ self._covariance
-            @ measurement_matrix.T
+            measurement_matrix @ self._covariance @ measurement_matrix.T
             + self._barometer_measurement_noise
         )
 
-        innovation_covariance = self._symmetrize_covariance(
-            innovation_covariance
-        )
+        innovation_covariance = self._symmetrize_covariance(innovation_covariance)
 
         kalman_gain = self._kalman_gain(
             innovation_covariance,
@@ -234,11 +205,7 @@ class ExtendedKalmanFilter:
         self._state += kalman_gain @ innovation
 
         self._state[6:10] = (
-            Quaternion.from_numpy(
-                self._state[6:10]
-            )
-            .normalized()
-            .as_numpy()
+            Quaternion.from_numpy(self._state[6:10]).normalized().as_numpy()
         )
 
         identity = np.eye(
@@ -249,68 +216,71 @@ class ExtendedKalmanFilter:
         joseph = identity - kalman_gain @ measurement_matrix
 
         self._covariance = (
-            joseph
-            @ self._covariance
-            @ joseph.T
-            + kalman_gain
-            @ self._barometer_measurement_noise
-            @ kalman_gain.T
+            joseph @ self._covariance @ joseph.T
+            + kalman_gain @ self._barometer_measurement_noise @ kalman_gain.T
         )
 
-        self._covariance = self._symmetrize_covariance(
-            self._covariance
-        )
+        self._covariance = self._symmetrize_covariance(self._covariance)
 
         return self.get_state()
 
     def get_state(self) -> NDArray[np.float64]:
-        """Return a copy of the current state."""
+        """
+        Return a copy of the current navigation state.
+
+        The returned state vector is copied from the
+        internally stored EKF state.
+        """
         return self._state.copy()
 
     def set_state(
         self,
-        state: NDArray[np.float64]
-        | list[float]
-        | tuple[float, ...],
+        state: NDArray[np.float64] | list[float] | tuple[float, ...],
     ) -> None:
-        """Replace the EKF state vector."""
+        """
+        Replace the EKF state vector.
+
+        The supplied state is validated, normalized
+        (quaternion), and copied into the internal state.
+        """
         values = np.asarray(
             state,
             dtype=np.float64,
         ).reshape(-1)
 
         if values.size != self.STATE_SIZE:
-            raise ValueError(
-                f"State must contain exactly {self.STATE_SIZE} values."
-            )
+            raise ValueError(f"State must contain exactly {self.STATE_SIZE} values.")
 
         if not np.all(np.isfinite(values)):
-            raise ValueError(
-                "State must contain only finite values."
-            )
+            raise ValueError("State must contain only finite values.")
 
-        values[6:10] = (
-            Quaternion.from_numpy(values[6:10])
-            .normalized()
-            .as_numpy()
-        )
+        values[6:10] = Quaternion.from_numpy(values[6:10]).normalized().as_numpy()
 
         self._state = values.copy()
 
     def get_covariance(self) -> NDArray[np.float64]:
-        """Return a copy of the covariance matrix."""
+        """
+        Return a copy of the covariance matrix.
+
+        The returned matrix is copied from the internally
+        stored EKF covariance.
+        """
         return self._covariance.copy()
 
     def set_covariance(
         self,
-        covariance: NDArray[np.float64]
-        | list[list[float]],
+        covariance: NDArray[np.float64] | list[list[float]],
     ) -> None:
-        """Replace the covariance matrix."""
+        """
+        Replace the covariance matrix.
+
+        The supplied covariance matrix is validated
+        and copied into the internal EKF covariance.
+        """
         values = np.asarray(
-        covariance,
-        dtype=np.float64,
-    )
+            covariance,
+            dtype=np.float64,
+        )
 
         if values.shape != (
             self.STATE_SIZE,
@@ -321,42 +291,35 @@ class ExtendedKalmanFilter:
             )
 
         if not np.all(np.isfinite(values)):
-            raise ValueError(
-                "Covariance must contain only finite values."
-            )
+            raise ValueError("Covariance must contain only finite values.")
 
         if not np.allclose(values, values.T, atol=1e-12):
-            raise ValueError(
-                "Covariance matrix must be symmetric."
-            )
+            raise ValueError("Covariance matrix must be symmetric.")
 
         if np.any(np.diag(values) < 0.0):
-            raise ValueError(
-                "Covariance diagonal entries must be non-negative."
-            )
+            raise ValueError("Covariance diagonal entries must be non-negative.")
 
         self._covariance = values.copy()
 
     def reset(self) -> None:
-        """Reset the filter to its default state."""
+        """
+        Reset the filter.
+
+        The internal state, covariance and noise
+        matrices are restored to their default values.
+        """
         self._state = self._initial_state()
         self._covariance = self._initial_covariance()
 
-        self._process_noise = (
-            np.eye(
-                self.STATE_SIZE,
-                dtype=np.float64,
-            )
-            * np.float64(1e-3)
-        )
+        self._process_noise = np.eye(
+            self.STATE_SIZE,
+            dtype=np.float64,
+        ) * np.float64(1e-3)
 
-        self._gnss_measurement_noise = (
-            np.eye(
-                3,
-                dtype=np.float64,
-            )
-            * np.float64(1e-2)
-        )
+        self._gnss_measurement_noise = np.eye(
+            3,
+            dtype=np.float64,
+        ) * np.float64(1e-2)
 
         self._barometer_measurement_noise = np.array(
             [[1e-2]],
@@ -364,7 +327,12 @@ class ExtendedKalmanFilter:
         )
 
     def _initial_state(self) -> NDArray[np.float64]:
-        """Return the default EKF state."""
+        """
+        Return the default EKF state.
+
+        Constructed with zero position, velocity and
+        angular rates, and an identity quaternion.
+        """
         state = np.zeros(
             self.STATE_SIZE,
             dtype=np.float64,
@@ -373,7 +341,13 @@ class ExtendedKalmanFilter:
         return state
 
     def _initial_covariance(self) -> NDArray[np.float64]:
-        """Return the default covariance matrix."""
+        """
+        Return the default covariance matrix.
+
+        Constructed as an identity covariance with
+        reduced uncertainty for attitude and
+        angular-rate states.
+        """
         covariance = np.eye(
             self.STATE_SIZE,
             dtype=np.float64,
@@ -386,18 +360,19 @@ class ExtendedKalmanFilter:
 
     def _validate_vector(
         self,
-        vector: NDArray[np.float64]
-        | list[float]
-        | tuple[float, ...],
+        vector: NDArray[np.float64] | list[float] | tuple[float, ...],
         name: str,
     ) -> NDArray[np.float64]:
-        """Validate a three-component vector."""
+        """
+        Validate a three-component vector.
+
+        Returns the validated vector converted to
+        float64 for EKF computations.
+        """
         values = validate_vector(vector)
 
         if not np.all(np.isfinite(values)):
-            raise ValueError(
-                f"{name} must contain only finite values."
-            )
+            raise ValueError(f"{name} must contain only finite values.")
 
         return values.astype(np.float64, copy=False)
 
@@ -406,13 +381,15 @@ class ExtendedKalmanFilter:
         value: float | np.floating[Any],
         name: str,
     ) -> np.float64:
-        """Validate a scalar value."""
+        """
+        Validate a scalar value.
+
+        Returns the validated scalar as float64.
+        """
         scalar = np.float64(value)
 
         if not np.isfinite(scalar):
-            raise ValueError(
-                f"{name} must be finite."
-            )
+            raise ValueError(f"{name} must be finite.")
 
         return scalar
 
@@ -420,16 +397,18 @@ class ExtendedKalmanFilter:
         self,
         dt: float | np.floating[Any],
     ) -> np.float64:
-        """Validate the prediction time step."""
+        """
+        Validate the prediction time step.
+
+        Returns the validated integration timestep.
+        """
         dt_value = np.float64(dt)
 
         if not np.isfinite(dt_value):
             raise ValueError("dt must be finite.")
 
         if dt_value <= 0.0:
-            raise ValueError(
-                "dt must be greater than zero."
-            )
+            raise ValueError("dt must be greater than zero.")
 
         return dt_value
 
@@ -437,16 +416,18 @@ class ExtendedKalmanFilter:
         self,
         dt: np.float64,
     ) -> NDArray[np.float64]:
-        """Construct a first-order state transition matrix."""
+        """
+        Construct the state transition matrix.
+
+        Computed from the supplied timestep using a
+        first-order linearized motion model."""
+
         transition = np.eye(
             self.STATE_SIZE,
             dtype=np.float64,
         )
 
-        transition[0:3, 3:6] = (
-            np.eye(3, dtype=np.float64)
-            * dt
-        )
+        transition[0:3, 3:6] = np.eye(3, dtype=np.float64) * dt
 
         transition[6:10, 10:13] = np.array(
             [
@@ -463,7 +444,13 @@ class ExtendedKalmanFilter:
     def _position_measurement_matrix(
         self,
     ) -> NDArray[np.float64]:
-        """Return the GNSS observation matrix."""
+        """
+        Return the GNSS observation matrix.
+
+        Constructed to map the EKF position states
+        into GNSS measurements.
+        """
+
         measurement = np.zeros(
             (3, self.STATE_SIZE),
             dtype=np.float64,
@@ -478,7 +465,13 @@ class ExtendedKalmanFilter:
     def _altitude_measurement_matrix(
         self,
     ) -> NDArray[np.float64]:
-        """Return the barometer observation matrix."""
+        """
+        Return the barometer observation matrix.
+
+        Constructed to map the EKF altitude state
+        into the barometer measurement.
+        """
+
         measurement = np.zeros(
             (1, self.STATE_SIZE),
             dtype=np.float64,
@@ -493,19 +486,18 @@ class ExtendedKalmanFilter:
         innovation_covariance: NDArray[np.float64],
         measurement_matrix: NDArray[np.float64],
     ) -> NDArray[np.float64]:
-        """Compute the Kalman gain."""
-        innovation_covariance = (
-            self._symmetrize_covariance(
-                innovation_covariance
-            )
-        )
+        """
+        Compute the Kalman gain.
+
+        Computed from the current covariance,
+        measurement matrix and innovation covariance.
+        """
+        innovation_covariance = self._symmetrize_covariance(innovation_covariance)
 
         gain = (
             self._covariance
             @ measurement_matrix.T
-            @ np.linalg.inv(
-                innovation_covariance
-            )
+            @ np.linalg.inv(innovation_covariance)
         )
 
         return gain.astype(
@@ -517,14 +509,15 @@ class ExtendedKalmanFilter:
         self,
         covariance: NDArray[np.float64],
     ) -> NDArray[np.float64]:
-        """Force a covariance matrix to remain symmetric."""
-        symmetric = (
-            covariance + covariance.T
-        ) * np.float64(0.5)
+        """
+        Return a symmetric covariance matrix.
 
-        eigenvalues, eigenvectors = np.linalg.eigh(
-            symmetric
-        )
+        Computed by averaging the matrix with its
+        transpose and clipping negative eigenvalues.
+        """
+        symmetric = (covariance + covariance.T) * np.float64(0.5)
+
+        eigenvalues, eigenvectors = np.linalg.eigh(symmetric)
 
         eigenvalues = np.clip(
             eigenvalues,
@@ -532,18 +525,9 @@ class ExtendedKalmanFilter:
             None,
         )
 
-        corrected = (
-            eigenvectors
-            @ np.diag(eigenvalues)
-            @ eigenvectors.T
-        )
+        corrected = eigenvectors @ np.diag(eigenvalues) @ eigenvectors.T
 
-        return (
-            (
-                corrected + corrected.T
-            )
-            * np.float64(0.5)
-        ).astype(
+        return ((corrected + corrected.T) * np.float64(0.5)).astype(
             np.float64,
             copy=False,
         )
